@@ -61,6 +61,8 @@ void total_XS(){
        total_xs_1pi[iff] = nNC_1pi*fScal*tgta;
        delete f1;
 
+       cout<<iff<<"  "<<nNC_1pi*1.0/nNC<<endl;
+
        gxs[iff]=new TGraph();
        double np = iff+1;
        gxs[iff]->SetPoint(0, 2, total_xs[iff]);

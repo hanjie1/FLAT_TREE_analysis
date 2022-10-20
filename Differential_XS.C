@@ -106,7 +106,7 @@ void Differential_XS(){
     TGraphErrors *gxs_data = new TGraphErrors(11, bin_c, xs_data, 0, xs_err);
 
     for(int i=0; i<4; i++){
-     for(int j=0; j<11; j++){
+     for(int j=1; j<12; j++){
          double tmp = hpi0_p[i]->GetBinContent(j);
          double new_con = tmp/(pi0_bin[j+1]-pi0_bin[j]);
          hpi0_p[i]->SetBinContent(j,new_con);
@@ -147,4 +147,25 @@ void Differential_XS(){
     }
     leg1->Draw();
 
+// apply smearing matrix
+    TFile *f2 = new TFile("../../4ch_diffPpi0_combined_WCdef_open_rw/output.root");
+    TH2D *hsmear = (TH2D*)f2->Get("smear");
+
+    TH1F *hpi0_p_smear = new TH1F("hpi0_p_smear","hpi0_p_smear", 11, pi0_bin);
+    TH1F *h1pi0_p_smear = new TH1F("h1pi0_p_smear","h1pi0_p_smear", 11,pi0_bin);
+    for(int i=1; i<12; i++){
+       double tmpxs1=0;
+       double tmpxs2=0;
+       for(int j=1; j<12; j++){ 
+           double fac = hsmear->GetBinContent(i, j);
+           tmpxs1 = tmpxs1 + fac*hpi0_p[0]->GetBinContent(j);
+           tmpxs2 = tmpxs2 + fac*h1pi0_p[0]->GetBinContent(j);
+       }
+
+       hpi0_p_smear->SetBinContent(i, tmpxs1);   // need to check i should start from 0 or 1
+       h1pi0_p_smear->SetBinContent(i, tmpxs2);
+    }
+
+    hpi0_p_smear->Draw("HIST");
+    hpi0_p[0]->Draw("HIST same");
 }
