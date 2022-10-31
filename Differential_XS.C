@@ -57,7 +57,7 @@ void Differential_XS(){
            T->GetEntry(i);
           
            if(cc==1) continue; // only NC events
-           if(Enu_true<0.275) continue;
+//           if(Enu_true<0.275) continue;
  
            bool foundpi0=false;
            int npi0=0;
@@ -132,7 +132,7 @@ void Differential_XS(){
         hpi0_p[i]->Draw("HIST same");
         hpi0_p[i]->SetLineColor(color[i]);
         hpi0_p[i]->SetLineWidth(2);
-        h1pi0_p[i]->Draw("HIST same");
+//        h1pi0_p[i]->Draw("HIST same");
         h1pi0_p[i]->SetLineColor(color[i]);
         h1pi0_p[i]->SetLineWidth(2);
         h1pi0_p[i]->SetLineStyle(9);
@@ -143,7 +143,7 @@ void Differential_XS(){
     leg1->AddEntry(gxs_data,"data", "P");
     for(int ii=0; ii<4; ii++){
        leg1->AddEntry(hpi0_p[ii], xs_label[ii], "L");
-       leg1->AddEntry(h1pi0_p[ii], xs_label[ii]+" 1 pi", "L");
+//       leg1->AddEntry(h1pi0_p[ii], xs_label[ii]+" 1 pi", "L");
     }
     leg1->Draw();
 
@@ -151,21 +151,54 @@ void Differential_XS(){
     TFile *f2 = new TFile("../../4ch_diffPpi0_combined_WCdef_open_rw/output.root");
     TH2D *hsmear = (TH2D*)f2->Get("smear");
 
-    TH1F *hpi0_p_smear = new TH1F("hpi0_p_smear","hpi0_p_smear", 11, pi0_bin);
-    TH1F *h1pi0_p_smear = new TH1F("h1pi0_p_smear","h1pi0_p_smear", 11,pi0_bin);
-    for(int i=1; i<12; i++){
-       double tmpxs1=0;
-       double tmpxs2=0;
-       for(int j=1; j<12; j++){ 
-           double fac = hsmear->GetBinContent(i, j);
-           tmpxs1 = tmpxs1 + fac*hpi0_p[0]->GetBinContent(j);
-           tmpxs2 = tmpxs2 + fac*h1pi0_p[0]->GetBinContent(j);
-       }
+    TH1F *hpi0_p_smear[4];
+    TH1F *h1pi0_p_smear[4];
 
-       hpi0_p_smear->SetBinContent(i, tmpxs1);   // need to check i should start from 0 or 1
-       h1pi0_p_smear->SetBinContent(i, tmpxs2);
+    for(int i=0; i<4; i++){
+       TString hname = "hpi0_p_smear_"+ xs_label[i];
+       hpi0_p_smear[i] = new TH1F(hname,hname, 11, pi0_bin);
+       hname = "h1pi0_p_smear_"+ xs_label[i];
+       h1pi0_p_smear[i] = new TH1F(hname,hname, 11, pi0_bin);
     }
 
-    hpi0_p_smear->Draw("HIST");
-    hpi0_p[0]->Draw("HIST same");
+    for(int i=1; i<12; i++){
+       double tmpxs1[4]={0};
+       double tmpxs2[4]={0};
+       for(int j=1; j<12; j++){ 
+           double fac = hsmear->GetBinContent(i, j);
+           for(int k=0; k<4; k++){ 
+             tmpxs1[k] = tmpxs1[k] + fac*hpi0_p[k]->GetBinContent(j);
+             tmpxs2[k] = tmpxs2[k] + fac*h1pi0_p[k]->GetBinContent(j);
+           }
+       }
+       for(int k=0; k<4; k++){
+         hpi0_p_smear[k]->SetBinContent(i, tmpxs1[k]);  
+         h1pi0_p_smear[k]->SetBinContent(i, tmpxs2[k]);
+       }
+    }
+
+    TCanvas *c2=new TCanvas("c2","c2",1000,1000);
+    gxs_data->Draw("AP");
+    gxs_data->GetXaxis()->SetTitle("pi0 momentum");
+    gxs_data->GetYaxis()->SetTitle("xs (cm2/GeV/nucleon)");
+
+    for(int i=0; i<4; i++){
+        hpi0_p_smear[i]->Draw("HIST same");
+        hpi0_p_smear[i]->SetLineColor(color[i]);
+        hpi0_p_smear[i]->SetLineWidth(2);
+//        h1pi0_p_smear[i]->Draw("HIST same");
+        h1pi0_p_smear[i]->SetLineColor(color[i]);
+        h1pi0_p_smear[i]->SetLineWidth(2);
+        h1pi0_p_smear[i]->SetLineStyle(9);
+    }
+
+    TLegend *leg2 = new TLegend(0.5,0.75, 0.85, 0.9);
+    leg2->SetNColumns(2);
+    leg2->AddEntry(gxs_data,"data", "P");
+    for(int ii=0; ii<4; ii++){
+       leg2->AddEntry(hpi0_p_smear[ii], xs_label[ii], "L");
+//       leg2->AddEntry(h1pi0_p_smear[ii], xs_label[ii]+" 1 pi", "L");
+    }
+    leg2->Draw();
+
 }
